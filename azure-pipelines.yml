@@ -1,0 +1,49 @@
+trigger:
+- master
+schedules:
+- cron: '*/15 9-16 * * Mon-Fri'
+  displayName: M-F 3:00 AM (UTC) daily build
+  branches:
+    include:
+    - master
+  always: true
+
+
+stages:
+- stage: TestStage
+  displayName: 'Test Stage'
+  jobs:
+  - job: TestJob
+    displayName: 'Test Job'
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    variables:
+      - group: 'Telegram'  # Reference the variable group named 'Secret'
+
+    steps:
+    - task: UsePythonVersion@0
+      displayName: Python Depencies
+      inputs:
+        versionSpec: '3.12'
+        addToPath: true
+        architecture: 'x64'
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt  # Install Python dependencies
+      displayName: 'Install Python Dependencies'
+    - task: PythonScript@0
+      displayName: Run Python
+      inputs:
+        scriptSource: 'filePath'
+        scriptPath: 'envTest.py'
+    - task: PythonScript@0
+      displayName: Run Python Holdings
+      inputs:
+        scriptSource: 'filePath'
+        scriptPath: 'holdings.py'
+    - task: PythonScript@0
+      displayName: Run Python SendTelegram
+      inputs:
+        scriptSource: 'filePath'
+        scriptPath: 'sendTelegramMsg.py'
